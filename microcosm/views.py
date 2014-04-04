@@ -1981,17 +1981,16 @@ class ErrorView(object):
 		view_data = {}
 		# If fetching user login data results in HTTP 401, the access token is invalid
 		try:
-			# Only fetch the first element of view_requests (whoami)
-			responses = response_list_to_dict(grequests.map(request.view_requests[:1]))
+			responses = response_list_to_dict(grequests.map(request.view_requests))
 			view_data['user'] = Profile(responses[request.whoami_url], summary=False) if request.whoami_url else None
+			view_data['site'] = Site(responses[request.site_url])
 		except APIException as e:
 			if e.status_code == 401 or e.status_code == 403:
 				view_data['logout'] = True
-		view_data['site'] = Site(responses[request.site_url])
 		context = RequestContext(request, view_data)
-		response = HttpResponseForbidden(loader.get_template('403.html').render(context))
 		if view_data.get('logout'):
 			response.delete_cookie('access_token')
+		response = HttpResponseForbidden(loader.get_template('403.html').render(context))
 		return response
 
 	@staticmethod
